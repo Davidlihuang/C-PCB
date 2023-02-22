@@ -24,6 +24,8 @@
 #endif
 #include "GLFW/glfw3.h"
 #include "io.h"
+//#include "GL/freeglut.h"
+#include "GL/gl.h"
 
 extern point_2d add_2d(const point_2d &p1, const point_2d &p2);
 extern points_2d torus_as_tristrip(const point_2d &p, double radius1, double radius2, int resolution);
@@ -311,7 +313,11 @@ int main(int argc, char *argv[])
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
+
 	glfwMakeContextCurrent(window);
+	// start GLEW extension handler huangli  add successful
+  	glewExperimental = GL_TRUE;
+  	glewInit();
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
 
