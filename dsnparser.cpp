@@ -25,55 +25,28 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include "dsnparser.h"
 
-struct tree
-{
-	std::string m_value;
-	std::vector <tree> m_branches;
-};
 
-struct pin
-{
-	std::string m_name;
-	std::string m_form;
-	double m_x;
-	double m_y;
-	double m_angle;
-};
+using namespace DSN;
+using namespace std;
 
-struct component
+DsnParser::DsnParser(const std::string& filename)
 {
-	std::string m_name;
-	std::map<std::string, pin> m_pin_map;
-};
+    //parser dsn file to tree
+}
 
-struct instance
+void DsnParser::init(const std::string& filename)
 {
-	std::string m_name;
-	std::string m_comp;
-	std::string m_side;
-	double m_x;
-	double m_y;
-	double m_angle;
-};
+    dsnparser = new DsnParser(filename);    
+}
 
-struct rule
+DsnParser& DsnParser::getInstance(const std::string& fileName)        
 {
-	double m_radius;
-	double m_gap;
-};
+    std::call_once(initFlag_, &DsnParser::init, fileName);
+    return *dsnparser;
+}
 
-struct circuit
-{
-	std::string m_via;
-	rule m_rule;
-};
-
-struct padstack
-{
-	points_2d m_shape;
-	rule m_rule;
-};
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
 {
@@ -109,7 +82,7 @@ auto shape_to_cords(const points_2d &shape, double a1, double a2)
 }
 
 //read input till given byte appears
-auto read_until(std::istream &in, char c)
+auto DsnParser::read_until(std::istream &in, char c)
 {
 	char input;
 	while (in.get(input))
@@ -120,7 +93,7 @@ auto read_until(std::istream &in, char c)
 }
 
 //read whitespace
-auto read_whitespace(std::istream &in)
+auto DsnParser::read_whitespace(std::istream &in)
 {
 	for (;;)
 	{
@@ -131,7 +104,7 @@ auto read_whitespace(std::istream &in)
 	}
 }
 
-auto read_node_name(std::istream &in)
+auto DsnParser::read_node_name(std::istream &in)
 {
 	std::string s;
 	for (;;)
@@ -145,7 +118,7 @@ auto read_node_name(std::istream &in)
 	return s;
 }
 
-auto read_string(std::istream &in)
+auto DsnParser::read_string(std::istream &in)
 {
 	std::string s;
 	for (;;)
@@ -159,7 +132,7 @@ auto read_string(std::istream &in)
 	return tree{s, {}};
 }
 
-auto read_quoted_string(std::istream &in)
+auto DsnParser::read_quoted_string(std::istream &in)
 {
 	std::string s;
 	for (;;)
@@ -173,7 +146,7 @@ auto read_quoted_string(std::istream &in)
 	return tree{s, {}};
 }
 
-tree read_tree(std::istream &in)
+tree DsnParser::read_tree(std::istream &in)
 {
 	read_until(in, '(');
 	read_whitespace(in);
@@ -206,7 +179,7 @@ tree read_tree(std::istream &in)
 	return t;
 }
 
-tree *search_tree(tree &t, const char *s)
+tree* DsnParser::search_tree(tree &t, const char *s)
 {
 	if (t.m_value == s) return &t;
 	for (auto &ct : t.m_branches)
@@ -217,7 +190,7 @@ tree *search_tree(tree &t, const char *s)
 	return nullptr;
 }
 
-void print_tree(const tree &t, int indent)
+void DsnParser::print_tree(const tree &t, int indent)
 {
 	if (!t.m_value.empty())
 	{
@@ -227,36 +200,37 @@ void print_tree(const tree &t, int indent)
 	for (auto &ct : t.m_branches) print_tree(ct, indent+1);
 }
 
-void ss_reset(std::stringstream &ss, const std::string &s)
+void DsnParser::ss_reset(std::stringstream &ss, const std::string &s)
 {
 	ss.str(s);
 	ss.clear();
 }
 
-void get_value(std::stringstream &ss, std::vector<tree>::iterator t, int &x)
+void DsnParser::get_value(std::stringstream &ss, std::vector<tree>::iterator t, int &x)
 {
 	ss_reset(ss, t->m_value);
 	ss >> x;
 }
 
-void get_value(std::stringstream &ss, std::vector<tree>::iterator t, double &x)
+void DsnParser::get_value(std::stringstream &ss, std::vector<tree>::iterator t, double &x)
 {
 	ss_reset(ss, t->m_value);
 	ss >> x;
 }
 
-void get_2d(std::stringstream &ss, std::vector<tree>::iterator t, double &x, double &y)
+void DsnParser::get_2d(std::stringstream &ss, std::vector<tree>::iterator t, double &x, double &y)
 {
 	get_value(ss, t, x);
 	get_value(ss, t + 1, y);
 }
 
-void get_rect(std::stringstream &ss, std::vector<tree>::iterator t, double &x1, double &y1, double &x2, double &y2)
+void DsnParser::get_rect(std::stringstream &ss, std::vector<tree>::iterator t, double &x1, double &y1, double &x2, double &y2)
 {
 	get_2d(ss, t, x1, y1);
 	get_2d(ss, t + 2, x2, y2);
 }
 
+/*
 int main(int argc, char *argv[])
 {
 	//process comand args
@@ -774,7 +748,7 @@ int main(int argc, char *argv[])
 
 	//print read element
 	print_tree(tree, 4);
-/*
+
 	//output pcb format
 	auto border = double(arg_b);
 	std::cout << "(" << maxx - minx + border * 2
@@ -815,5 +789,7 @@ int main(int argc, char *argv[])
 		}
 		std::cout << "))\n";
 	}
-	*/
+	
 }
+
+*/
