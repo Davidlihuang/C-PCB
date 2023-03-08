@@ -88,10 +88,10 @@ class DsnParser
 {
 public:
     static DsnParser& getInstance(const std::string& fileName);
-    
+    tree get_tree();
 private:    
     tree pcbTree;
-
+    std::ifstream infile;
 private:
     //read input till given byte appears
     auto read_until(std::istream &in, char c);
@@ -100,14 +100,14 @@ private:
     auto read_node_name(std::istream &in);
     auto read_string(std::istream &in);
     auto read_quoted_string(std::istream &in);
-    tree read_tree(std::istream &in);
-    tree *search_tree(tree &t, const char *s);
-    void print_tree(const tree &t, int indent);
-    void ss_reset(std::stringstream &ss, const std::string &s);
-    void get_value(std::stringstream &ss, std::vector<tree>::iterator t, int &x);
-    void get_value(std::stringstream &ss, std::vector<tree>::iterator t, double &x);
-    void get_2d(std::stringstream &ss, std::vector<tree>::iterator t, double &x, double &y);
-    void get_rect(std::stringstream &ss, std::vector<tree>::iterator t, double &x1, double &y1, double &x2, double &y2);
+    tree  read_tree(std::istream &in);
+    tree* search_tree(tree &t, const char *s);
+    void  print_tree(const tree &t, int indent);
+    void  ss_reset(std::stringstream &ss, const std::string &s);
+    void  get_value(std::stringstream &ss, std::vector<tree>::iterator t, int &x);
+    void  get_value(std::stringstream &ss, std::vector<tree>::iterator t, double &x);
+    void  get_2d(std::stringstream &ss, std::vector<tree>::iterator t, double &x, double &y);
+    void  get_rect(std::stringstream &ss, std::vector<tree>::iterator t, double &x1, double &y1, double &x2, double &y2);
 private:
     DsnParser(const std::string& filename);
     static void init(const std::string& filename);
@@ -116,8 +116,7 @@ private:
 
 };
 
-std::once_flag DsnParser::initFlag_;
-DsnParser* DsnParser::dsnparser = nullptr;
+
 
 
 _DSNEND_

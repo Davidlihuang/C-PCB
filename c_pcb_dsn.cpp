@@ -25,7 +25,9 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-
+#include "dsnparser.h"
+using namespace DSN;
+/*
 struct tree
 {
 	std::string m_value;
@@ -74,7 +76,7 @@ struct padstack
 	points_2d m_shape;
 	rule m_rule;
 };
-
+*/
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
 {
 	std::stringstream ss(s);
@@ -177,7 +179,8 @@ tree read_tree(std::istream &in)
 {
 	read_until(in, '(');
 	read_whitespace(in);
-	auto t = tree{read_node_name(in), {}};
+	std::string nodeName = read_node_name(in);
+	auto t = tree{nodeName, {}};
 	for (;;)
 	{
 		read_whitespace(in);
@@ -196,10 +199,22 @@ tree read_tree(std::istream &in)
 		}
 		if (b == '"')
 		{
-			in.get(c);
-			t.m_branches.push_back(read_quoted_string(in));
-			in.get(c);
-			continue;
+			if(nodeName != "string_quote")
+			{
+				in.get(c);
+				t.m_branches.push_back(read_quoted_string(in));
+				in.get(c);
+				continue;
+			}
+			else
+			{
+				in.get(c);
+				std::string str;
+				str.push_back(b);
+				t.m_branches.push_back(tree{str, {}});
+
+				continue;
+			}
 		}
 		t.m_branches.push_back(read_string(in));
 	}
@@ -257,13 +272,15 @@ void get_rect(std::stringstream &ss, std::vector<tree>::iterator t, double &x1, 
 	get_2d(ss, t + 2, x2, y2);
 }
 
+
+
 int main(int argc, char *argv[])
 {
 	//process comand args
 	auto use_file = false;
 	std::ifstream arg_infile;
 	auto arg_b = 1;
-
+	std::string filename;
 	std::stringstream ss;
 	for (auto i = 1; i < argc; ++i)
 	{
@@ -287,6 +304,7 @@ int main(int argc, char *argv[])
 		else
 		{
 			//filename
+			filename = argv[i];
 			arg_infile.open(argv[i], std::ifstream::in);
 			use_file = true;
 		}
@@ -296,8 +314,13 @@ int main(int argc, char *argv[])
 	std::istream &in = use_file ? arg_infile : std::cin;
 
 	//create tree from input
-	auto tree = read_tree(in);
+	//auto tree = read_tree(in);
+   
+    DsnParser& dsn_parser = DsnParser::getInstance(filename);
+	auto tree = dsn_parser.get_tree();
+	print_tree(tree, 4);
 
+	
 	auto structure_root = search_tree(tree, "structure");
 	auto layer_to_index_map = std::map<std::string, int>{};
 	auto layer_to_keepout_map = std::map<std::string, paths>{};
